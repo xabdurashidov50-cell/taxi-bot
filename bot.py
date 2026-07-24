@@ -1,37 +1,44 @@
+import asyncio
 import logging
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
-# Bot tokeningizni shu yerga kiritasiz
-API_TOKEN = '8861427129:AAGeUwChMJlME6tuzhjXkptt64kz14vROKE'
+# =========================================================
+# ⚠️ SHU YERLARGA O'Z MA'LUMOTLARINGIZNI YOZING:
+BOT_TOKEN = "8861427129:AAGeUwChMJlME6tuzhjXkptt64kz14vROKE" # BotFather'dan olgan tokeningiz
+ADMIN_USERNAME = "TDIU_1"          # Telegram username'ingiz (@ siz)
+# =========================================================
 
 # Logging sozlamalari
 logging.basicConfig(level=logging.INFO)
 
-# Bot va Dispatcher yaratamiz
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+# Bot va Dispatcher obyektlari
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher()
 
-# --- TUGMALAR ---
-# Asosiy menyu tugmalari
-main_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-main_keyboard.add(KeyboardButton("🚖 Taksi chaqirish"))
-main_keyboard.add(KeyboardButton("💬 Admin bilan bog'lanish"))
+# --- TUGMALAR (KEYBOARDS) ---
 
-# Admin lichkasiga o'tkazuvchi Inline tugma
-# ⚠️ "Sening_Username" o'rniga o'zingizning Telegram username'ingizni yozing!
-admin_inline_keyboard = InlineKeyboardMarkup()
-admin_inline_keyboard.add(
-    InlineKeyboardButton(
-        text="👉 Adminga yozish (Lichka)", 
-        url="https://t.me/@TDIU_1"
-    )
+# 1. Asosiy menyu (Ekranning pastki qismida turadigan tugmalar)
+main_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="🚖 Taksi chaqirish")],
+        [KeyboardButton(text="💬 Admin bilan bog'lanish")]
+    ],
+    resize_keyboard=True
 )
 
-# --- HANDLERLAR (BUYRUQLAR) ---
+# 2. Admin lichkasiga o'tkazuvchi tugma
+admin_inline_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="👉 Adminga yozish (Lichka)", url=f"https://t.me/{ADMIN_USERNAME}")]
+    ]
+)
+
+# --- BUYRUQLAR VA TUGMALAR ISHLOVCHILARI (HANDLERS) ---
 
 # /start buyrug'i kelganda
-@dp.message_handler(commands=['start'])
+@dp.message(CommandStart())
 async def send_welcome(message: types.Message):
     await message.answer(
         "Xush kelibsiz! Kerakli bo'limni tanlang:",
@@ -39,18 +46,21 @@ async def send_welcome(message: types.Message):
     )
 
 # "💬 Admin bilan bog'lanish" tugmasi bosilganda
-@dp.message_handler(text="💬 Admin bilan bog'lanish")
+@dp.message(F.text == "💬 Admin bilan bog'lanish")
 async def contact_admin(message: types.Message):
     await message.answer(
         "Admin bilan bog'lanish uchun pastdagi tugmani bosing:",
         reply_markup=admin_inline_keyboard
     )
 
-# "🚖 Taksi chaqirish" yoki boshqa xabarlar uchun
-@dp.message_handler(text="🚖 Taksi chaqirish")
+# "🚖 Taksi chaqirish" tugmasi bosilganda
+@dp.message(F.text == "🚖 Taksi chaqirish")
 async def order_taxi(message: types.Message):
-    await message.answer("Taksi chaqirish bo'limi ishga tushdi!")
+    await message.answer("🚖 Taksi chaqirish bo'limi ishga tushdi!")
 
-# Botni ishga tushirish
+# --- BOTNI ISHGA TUSHIRISH ---
+async def main():
+    await dp.start_polling(bot)
+
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    asyncio.run(main())
